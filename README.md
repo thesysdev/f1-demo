@@ -6,6 +6,8 @@ It grew out of the [conversational analytics cookbook](https://github.com/thesys
 
 ## Run it
 
+Needs Node 22.13 or later.
+
 ```bash
 npm install
 echo "THESYS_API_KEY=sk-th-..." > .env.local
@@ -28,22 +30,24 @@ Open http://127.0.0.1:3000.
 | URL                               | What it shows                                    |
 | --------------------------------- | ------------------------------------------------ |
 | `/`, `/standings`, `/drivers`, `/teams` | Dashboards; picking anything starts a chat |
-| `/new`                            | A new chat with suggested questions              |
+| `/new`                            | A new chat, with three questions suggested from your earlier ones (`/api/starters`) |
 | `/[threadId]`                     | An earlier chat, loaded from Gateway             |
 
 Every app URL is drawn by `src/app/(radio)/layout.tsx` over one empty catch-all page, so the chat stays mounted while the URL moves to a new thread mid-answer.
 
 ## How a question is answered
 
-1. The browser sends the thread id and the new question to `/api/chat`.
+1. The browser sends the thread id and the thread's messages to `/api/chat`; the route uses only the last one, the new question.
 2. The route loads the thread's earlier turns from its Gateway conversation, with their tool calls and results.
 3. Gateway's Chat Completions API picks F1 tools (`get_results`, `get_lap_times`, `get_standings`, …). The route runs them between completions (`src/lib/tool-loop.ts`) and streams AG-UI events, so each tool call shows its result live.
-4. The answer streams back as OpenUI Lang and renders with the F1 component library (`src/library.ts`). Charts fetch their own rows from `/api/f1/[tool]`, so numbers never pass through the model.
+4. The answer streams back as OpenUI Lang and renders as it arrives, with the F1 component library (`src/library.ts`). The F1 charts take only a session and drivers and fetch their own rows from `/api/f1/[tool]`, so their numbers never pass through the model; tables carry the values the model copies from tool results.
 5. The turn is stored in the Gateway conversation before the stream ends, so a follow-up sees it.
 
 ## Data
 
-The tools (`src/lib/f1/tools`) call OpenF1 through one rate-limited client with a disk cache under `data/openf1`. Finished sessions are cached forever, and a stale copy is served if OpenF1 is down. `npm run snapshot:f1` fills that cache ahead of time; `npm run snapshot:f1 -- --year 2025 --light` adds last season.
+The tools (`src/lib/f1/tools`) call OpenF1 through one rate-limited client with a disk cache under `data/openf1`. Finished sessions are cached forever, and a stale copy is served if OpenF1 is down. `npm run snapshot:f1` fills that cache ahead of time; `npm run snapshot:f1 -- --year 2025 --light` adds last season's races (results, standings and stints only).
+
+Driver, team colour and circuit data for the visuals is committed under `src/assets/f1`. Refresh it for a new season with `npx tsx scripts/snapshot-f1-assets.ts`.
 
 ## Deploying
 
