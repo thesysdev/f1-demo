@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { z } from "zod/v4";
 import { f1PromptContext } from "../../../lib/f1/context";
-import { isOwnOrigin } from "../../../lib/same-origin";
+import { hasAllowedOrigin } from "../../../lib/same-origin";
 
 export const runtime = "nodejs";
 
@@ -13,7 +13,7 @@ const requestSchema = z.object({
 const answerSchema = z.object({ questions: z.array(z.string().trim().min(1).max(90)).min(3) });
 
 export async function POST(request: Request) {
-  if (!isOwnOrigin(request))
+  if (!hasAllowedOrigin(request))
     return Response.json({ error: "Local requests only." }, { status: 403 });
   let body;
   try {
@@ -46,7 +46,6 @@ export async function POST(request: Request) {
           { role: "user", content: body.recent.map((q) => `- ${q}`).join("\n") },
         ],
         max_completion_tokens: 400,
-        store: false,
       },
       { signal: request.signal },
     );

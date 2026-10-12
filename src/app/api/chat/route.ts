@@ -1,3 +1,4 @@
+import { storeChatCompletionHistory } from "@openuidev/server/openai";
 import OpenAI from "openai";
 import type {
   ChatCompletionChunk,
@@ -6,36 +7,30 @@ import type {
 import { z } from "zod/v4";
 import { f1PromptContext } from "../../../lib/f1/context";
 import { f1Executors, f1FunctionTools } from "../../../lib/f1/tools";
+import { loadChatCompletionHistory } from "../../../lib/gateway-history";
 import { analyticsPrompt } from "../../../lib/prompt";
 import { runChatToolLoop } from "../../../lib/tool-loop";
-import { isOwnOrigin } from "../../../lib/same-origin";
+import { hasAllowedOrigin } from "../../../lib/same-origin";
 
 export const runtime = "nodejs";
 
-// Chat Completions keeps no state and nothing is stored on a server, so the browser sends the
-// whole conversation on every turn. Forward only user questions and assistant answers. Tool calls
-// and results from the browser are dropped, so every value the model uses comes from a query
-// this server runs.
+// Agent Interface's storage creates the Gateway conversation first and sends its id as threadId.
+// The browser sends the whole thread; only its last message, the new question, is used.
 const chatRequestSchema = z.object({
+  // A Gateway conversation id, as Agent Interface's storage created it.
+  threadId: z.string().max(256).regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/),
   messages: z
-    .array(
-      z.discriminatedUnion("role", [
-        z.object({ role: z.literal("user"), content: z.string().trim().min(1).max(600) }),
-        z.object({ role: z.literal("assistant"), content: z.string().nullish() }),
-        z.object({ role: z.literal("tool") }),
-      ]),
-    )
+    .array(z.unknown())
     .min(1)
-    .max(100)
-    .refine((messages) => messages.at(-1)?.role === "user"),
+    .transform((messages) => messages.at(-1))
+    .pipe(z.object({ role: z.literal("user"), content: z.string().trim().min(1).max(600) })),
 });
 
-function conversation(messages: z.infer<typeof chatRequestSchema>["messages"]) {
-  return messages.flatMap((message): ChatCompletionMessageParam[] =>
-    message.role === "tool" || !message.content
-      ? []
-      : [{ role: message.role, content: message.content }],
-  );
+// The thread's earlier turns, loaded from its Gateway conversation with their tool calls and
+// results rather than taken from the browser, so every value the model sees came from a query
+// this server ran. To send less of a long thread, compact the messages here.
+function conversation(apiKey: string, threadId: string, signal: AbortSignal) {
+  return loadChatCompletionHistory({ apiKey, conversationId: threadId, signal });
 }
 
 async function parseChatRequest(request: Request) {
@@ -65,7 +60,7 @@ async function parseChatRequest(request: Request) {
 export async function POST(request: Request) {
   // This example has no authentication, so it accepts browser requests only from its own
   // local page. Add authentication and rate limits before deploying it.
-  if (!isOwnOrigin(request))
+  if (!hasAllowedOrigin(request))
     return Response.json(
       { error: "This example only accepts requests from its local chat interface." },
       { status: 403 },
@@ -75,10 +70,11 @@ export async function POST(request: Request) {
     body = await parseChatRequest(request);
   } catch {
     return Response.json(
-      { error: "Send the conversation, ending with a question of up to 600 characters." },
+      { error: "Send a threadId and the thread's messages, ending with a question of up to 600 characters." },
       { status: 400 },
     );
   }
+  const { threadId, messages: question } = body; // messages is narrowed to the last one
   const apiKey = process.env.THESYS_API_KEY;
   if (!apiKey)
     return Response.json(
@@ -94,6 +90,12 @@ export async function POST(request: Request) {
   // carries no tool definitions. The loop runs only the names registered here.
   const tools = f1FunctionTools();
   const functionTools = f1Executors();
+  let history: ChatCompletionMessageParam[];
+  try {
+    history = await conversation(apiKey, threadId, request.signal);
+  } catch {
+    return Response.json({ error: "Could not load this thread from OpenUI Gateway." }, { status: 502 });
+  }
   const context = await f1PromptContext(request.signal);
   const params = {
     model: process.env.OPENUI_MODEL || "openai/gpt-5.5",
@@ -102,12 +104,11 @@ export async function POST(request: Request) {
         role: "system" as const,
         content: analyticsPrompt({ today: new Date().toISOString().slice(0, 10), ...context }),
       },
-      ...conversation(body.messages),
+      ...history,
+      question,
     ],
     tools,
     max_completion_tokens: 6000,
-    // A public demo: ask Gateway not to keep the completion.
-    store: false,
   };
 
   // Open the first round before responding, so a rejected key, rate limit, or unknown model
@@ -125,6 +126,11 @@ export async function POST(request: Request) {
       { status: upstream.status ?? 502 },
     );
   }
+
+  // Chat Completions doesn't write to the conversation, so store this turn when the run ends: the
+  // user's message, then each message the run adds, which are the tool calls, their results, and
+  // the answer. A stopped or failed run still stores the question and whatever finished before.
+  const turn: ChatCompletionMessageParam[] = [question];
 
   // Stream AG-UI events to the browser, running app-owned tools between model turns.
   const encoder = new TextEncoder();
@@ -144,6 +150,7 @@ export async function POST(request: Request) {
           emit,
           signal: request.signal,
           maxRounds: 5,
+          onMessage: (message) => turn.push(message),
         });
       } catch (error) {
         emit({
@@ -151,6 +158,10 @@ export async function POST(request: Request) {
           message: error instanceof Error ? error.message : String(error),
         });
       } finally {
+        // The stream ends once the turn is stored, so a follow-up question loads it.
+        await storeChatCompletionHistory({ apiKey, conversationId: threadId, messages: turn }).catch(
+          (error: unknown) => console.error("Could not store the turn in the Gateway conversation.", error),
+        );
         if (open) controller.close();
       }
     },
