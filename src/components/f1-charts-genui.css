@@ -1,6 +1,6 @@
 /* A chart waiting on its data: the panel at its final height with its title, square corners and
-   no fill of its own. The checkerboard and its shimmer are the block-by-block loader's board
-   (.f1-settle in stream-settle.css), laid behind the title, so the two loaders always match.
+   no fill of its own. The checkerboard and its shimmer are the loading board
+   (.f1-settle in loading-board.css), laid behind the title, as the dashboards use while loading.
    With nothing to show it settles to a plain square panel with one quiet line. */
 .f1-chart.f1-chart-pending {
   position: relative;

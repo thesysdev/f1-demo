@@ -95,7 +95,7 @@ function titled(name: "LineChart" | "BarChart", description: string) {
         xAxisLabel: p.xLabel as string | undefined,
         yAxisLabel: p.yLabel as string | undefined,
         height: p.height as number | undefined,
-        // No draw-in animation: the chart appears once its block settles, with the gate's fade.
+        // No draw-in animation: the chart re-renders as its data streams in, which would replay it.
         isAnimationActive: false,
       };
       // Rows-as-arrays and other shapes OpenUI accepts fall back to its own renderer.

@@ -1,6 +1,7 @@
-/* A block still being written: cream checkerboard tiles on a transparent ground, at the block's
-   final size with square corners, so the page shows through between the tiles. While it loads, a
-   slanted pair of speed stripes in deeper cream sweeps across, fast then a short pause. Chart loading panels draw this same board (.f1-chart-board). */
+/* The loading board: cream checkerboard tiles on a transparent ground, at the content's final
+   size with square corners, so the page shows through between the tiles. While it loads, a
+   slanted pair of speed stripes in deeper cream sweeps across, fast then a short pause. Chart
+   panels draw it while their rows load (.f1-chart-board), and the dashboards while theirs do. */
 .f1-settle {
   --f1-settle-tile: 16px;
   position: relative;
