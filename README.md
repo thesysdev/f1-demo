@@ -33,7 +33,7 @@ Open http://127.0.0.1:3000.
 | `/new`                            | A new chat, with three questions suggested from your earlier ones (`/api/starters`) |
 | `/[threadId]`                     | An earlier chat, loaded from Gateway             |
 
-Every app URL is drawn by `src/app/(radio)/layout.tsx` over one empty catch-all page, so the chat stays mounted while the URL moves to a new thread mid-answer.
+Each URL is its own page under `src/app/(radio)/`. The layout holds what stays mounted between them: the chat store, the sidebar, the input, and the thread once a conversation has messages. That is what lets the URL move from `/new` (or a dashboard) to the new thread mid-answer without cutting it off.
 
 ## How a question is answered
 
