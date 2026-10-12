@@ -7,10 +7,12 @@ import type {
 import { z } from "zod/v4";
 import { f1PromptContext } from "../../../lib/f1/context";
 import { f1Executors, f1FunctionTools } from "../../../lib/f1/tools";
-import { loadChatCompletionHistory } from "../../../lib/gateway-history";
+import { frontendToken } from "../../../lib/frontend-token";
+import { HistoryLoadError, loadChatCompletionHistory } from "../../../lib/gateway-history";
 import { analyticsPrompt } from "../../../lib/prompt";
 import { runChatToolLoop } from "../../../lib/tool-loop";
 import { hasAllowedOrigin } from "../../../lib/same-origin";
+import { readUserId } from "../../../lib/user-id";
 
 export const runtime = "nodejs";
 
@@ -29,8 +31,8 @@ const chatRequestSchema = z.object({
 // The thread's earlier turns, loaded from its Gateway conversation with their tool calls and
 // results rather than taken from the browser, so every value the model sees came from a query
 // this server ran. To send less of a long thread, compact the messages here.
-function conversation(apiKey: string, threadId: string, signal: AbortSignal) {
-  return loadChatCompletionHistory({ apiKey, conversationId: threadId, signal });
+function conversation(token: string, threadId: string, signal: AbortSignal) {
+  return loadChatCompletionHistory({ frontendToken: token, conversationId: threadId, signal });
 }
 
 async function parseChatRequest(request: Request) {
@@ -58,8 +60,7 @@ async function parseChatRequest(request: Request) {
 }
 
 export async function POST(request: Request) {
-  // This example has no authentication, so it accepts browser requests only from its own
-  // local page. Add authentication and rate limits before deploying it.
+  // No sign-in: requests come only from this app's pages, from an anonymous visitor (lib/user-id.ts).
   if (!hasAllowedOrigin(request))
     return Response.json(
       { error: "This example only accepts requests from its local chat interface." },
@@ -75,6 +76,8 @@ export async function POST(request: Request) {
     );
   }
   const { threadId, messages: question } = body; // messages is narrowed to the last one
+  const userId = readUserId(request);
+  if (!userId) return Response.json({ error: "Missing visitor id." }, { status: 401 });
   const apiKey = process.env.THESYS_API_KEY;
   if (!apiKey)
     return Response.json(
@@ -90,10 +93,16 @@ export async function POST(request: Request) {
   // carries no tool definitions. The loop runs only the names registered here.
   const tools = f1FunctionTools();
   const functionTools = f1Executors();
+  // Read the thread as the visitor, not with the API key: Gateway refuses a thread that isn't
+  // theirs, so knowing a conversation id isn't enough to read or add to someone else's chat.
+  // Once it's confirmed theirs, the turn is stored with the key below.
   let history: ChatCompletionMessageParam[];
   try {
-    history = await conversation(apiKey, threadId, request.signal);
-  } catch {
+    const { token } = await frontendToken(apiKey, userId, request.signal);
+    history = await conversation(token, threadId, request.signal);
+  } catch (error) {
+    if (error instanceof HistoryLoadError && (error.status === 403 || error.status === 404))
+      return Response.json({ error: "This thread isn't available." }, { status: 404 });
     return Response.json({ error: "Could not load this thread from OpenUI Gateway." }, { status: 502 });
   }
   const context = await f1PromptContext(request.signal);

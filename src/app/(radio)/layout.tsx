@@ -30,14 +30,6 @@ import { RadioThread } from "./radio-thread";
  * from /new (or a dashboard) to the new thread's address mid-answer without cutting it off.
  */
 
-// The route loads the thread's earlier turns from its Gateway conversation and uses only
-// the new question; agUIAdapter reads the AG-UI events it streams back.
-const llm = fetchLLM({
-  url: "/api/chat",
-  streamAdapter: agUIAdapter(),
-  messageFormat: openAIMessageFormat,
-});
-
 // The route takes questions of up to 600 characters.
 const MAX_QUESTION = 600;
 
@@ -152,6 +144,16 @@ export default function RadioLayout({ children }: { children: ReactNode }) {
   // /api/frontend-token, scoped to this tab session's anonymous visitor id (as in the OpenUI docs
   // chat). The chat route appends each turn, so a reopened thread loads it.
   const [userId] = useState(getOrCreateUserId);
+  // The route loads the thread's earlier turns from its Gateway conversation, reading as this
+  // visitor, and uses only the new question; agUIAdapter reads the AG-UI events it streams back.
+  const [llm] = useState(() =>
+    fetchLLM({
+      url: "/api/chat",
+      streamAdapter: agUIAdapter(),
+      messageFormat: openAIMessageFormat,
+      headers: { [USER_ID_HEADER]: userId },
+    }),
+  );
   const tokenFetch = useMemo<typeof fetch>(
     () => (input, init) => {
       if (input !== "/api/frontend-token") return fetch(input, init);
