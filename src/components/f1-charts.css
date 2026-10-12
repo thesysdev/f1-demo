@@ -108,6 +108,8 @@
   stroke-opacity: 0.6;
 }
 .f1-chart .recharts-line-curve {
+  /* react-ui 0.17 dropped LineChart's strokeWidth prop; the F1 line is 3px. */
+  stroke-width: 3;
   stroke-linejoin: round;
   stroke-linecap: round;
 }

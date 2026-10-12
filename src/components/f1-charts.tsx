@@ -102,9 +102,9 @@ function titled(name: "LineChart" | "BarChart", description: string) {
       const chart = !names.length || !data.length ? (
         <Base {...renderProps} />
       ) : name === "LineChart" ? (
-        <LineChartCondensed {...common} variant={p.variant as "linear" | "natural" | "step" | undefined} strokeWidth={3} />
+        <LineChartCondensed {...common} variant={p.variant as "linear" | "natural" | "step" | undefined} />
       ) : (
-        <BarChartCondensed {...common} variant={p.variant as "grouped" | "stacked" | undefined} maxBarWidth={28} radius={2} />
+        <BarChartCondensed {...common} variant={p.variant as "grouped" | "stacked" | undefined} maxBarWidth={28} barRadius={2} />
       );
       return (
         <figure className="f1-chart">
