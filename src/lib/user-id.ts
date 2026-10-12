@@ -1,12 +1,15 @@
-// An anonymous visitor id, as in the OpenUI docs chat. There's no sign-in: the browser makes up
-// an id once per tab session and sends it when asking for a frontend token, and Gateway scopes
-// that token to the id, so each visitor lists and opens only their own threads. It separates
-// visitors; it doesn't prove who anyone is.
+// An anonymous visitor id in the OpenUI docs chat's format (docs/lib/openui-cloud/user-id.ts):
+// `openui_<demo>_<uuid v4>`, kept in sessionStorage under the same key and sent in the same
+// header. There's no sign-in: the browser makes up an id once per tab session and sends it when
+// asking for a frontend token, and Gateway scopes that token to the id, so each visitor lists and
+// opens only their own threads. The demo prefix keeps this demo's visitors apart in Gateway's
+// logs. It separates visitors; it doesn't prove who anyone is.
 
-export const USER_ID_HEADER = "x-f1-demo-user-id";
+export const USER_ID_HEADER = "x-openui-cloud-user-id";
 
-const STORAGE_KEY = "f1-demo-user-id";
-const PATTERN = /^f1_demo_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const STORAGE_KEY = "openui-cloud-user-id";
+const PREFIX = "openui_f1_";
+const PATTERN = /^openui_f1_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 const isUserId = (value: string | null): value is string => value !== null && PATTERN.test(value);
 
@@ -24,9 +27,11 @@ export function getOrCreateUserId(): string {
   } catch {
     // Storage unavailable: use a fresh id for this page load.
   }
-  const id = `f1_demo_${crypto.randomUUID()}`;
+  const id = `${PREFIX}${crypto.randomUUID()}`;
   try {
     sessionStorage.setItem(STORAGE_KEY, id);
-  } catch {}
+  } catch {
+    // Continue with the generated id when browser storage is unavailable.
+  }
   return id;
 }
