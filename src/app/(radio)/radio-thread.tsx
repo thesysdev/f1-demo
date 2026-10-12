@@ -17,6 +17,7 @@ import {
   type PitWallStep,
 } from "../../components/chat";
 import { f1ToolLabel } from "../../components/chat/tool-icons";
+import { playTransmit } from "../../components/radio-sounds";
 import { library } from "../../library";
 import {
   groupIntoTurns,
@@ -100,6 +101,7 @@ function Answer({ message, streaming }: { message: AssistantMessage; streaming: 
         const text = event.humanFriendlyMessage ? wrapContent(event.humanFriendlyMessage) : "";
         const ctx: unknown[] = [`User clicked: ${event.humanFriendlyMessage}`];
         if (event.formState) ctx.push(event.formState);
+        playTransmit();
         processMessage({ role: "user", content: text + wrapContext(JSON.stringify(ctx)) });
       } else if (event.type === BuiltinActionType.OpenUrl) {
         const url = event.params?.["url"];
@@ -200,6 +202,7 @@ export function RadioThread() {
     if (at === -1) return;
     const question = messages[at];
     setMessages(messages.slice(0, at));
+    playTransmit();
     processMessage({ role: "user", content: question.content as string });
   };
 

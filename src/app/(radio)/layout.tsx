@@ -15,6 +15,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChatShell } from "../../components/chat-shell";
 import { AskProvider } from "../../components/dashboards";
+import { playTransmit } from "../../components/radio-sounds";
 import { Sidebar, type SidebarThread } from "../../components/sidebar";
 import { f1Theme } from "../../f1-typography";
 import { messageText } from "./messages";
@@ -103,7 +104,12 @@ function RadioFrame({ children }: { children: ReactNode }) {
     () => threads.map((t) => ({ id: t.id, title: messageText(t.title), meta: when(t.createdAt) })),
     [threads],
   );
-  const ask = (question: string) => processMessage({ role: "user", content: question.slice(0, MAX_QUESTION) });
+  // The input, suggested questions and dashboard items all ask through here, so each plays the
+  // team-radio clip. Follow-up cards and retry send from the thread (radio-thread.tsx) and play it there.
+  const ask = (question: string) => {
+    playTransmit();
+    processMessage({ role: "user", content: question.slice(0, MAX_QUESTION) });
+  };
 
   return (
     // The carbon sidebar floats on the left; the chat page fills the rest.
@@ -129,8 +135,7 @@ function RadioFrame({ children }: { children: ReactNode }) {
           input={{
             busy: isRunning,
             maxLength: MAX_QUESTION,
-            // The team-radio clip on send; typing stays silent.
-            sound: "send",
+            // ask() plays the team-radio clip; typing stays silent.
             onSend: ask,
           }}
         >
