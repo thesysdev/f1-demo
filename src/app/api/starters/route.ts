@@ -46,6 +46,7 @@ export async function POST(request: Request) {
           { role: "user", content: body.recent.map((q) => `- ${q}`).join("\n") },
         ],
         max_completion_tokens: 400,
+        store: false,
       },
       { signal: request.signal },
     );

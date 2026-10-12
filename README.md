@@ -21,8 +21,6 @@ Open http://127.0.0.1:3000.
 | ------------------- | ------------------ | ---------------------------------------------------------- |
 | `THESYS_API_KEY`    | (required)         | OpenUI Gateway key, used only on the server                |
 | `OPENUI_MODEL`      | `openai/gpt-5.5`   | Model for the chat                                         |
-| `DEMO_USER_ID`      | `demo-user`        | Gateway user that owns the threads (there is no sign-in)   |
-| `APP_ID`            | `f1-dashboard`     | Keeps this app's threads apart from others on the same key |
 | `OPENF1_PER_MINUTE` | `28`               | OpenF1 request budget per minute                           |
 
 ## Pages
@@ -31,17 +29,16 @@ Open http://127.0.0.1:3000.
 | --------------------------------- | ------------------------------------------------ |
 | `/`, `/standings`, `/drivers`, `/teams` | Dashboards; picking anything starts a chat |
 | `/new`                            | A new chat, with three questions suggested from your earlier ones (`/api/starters`) |
-| `/[threadId]`                     | An earlier chat, loaded from Gateway             |
+| `/[threadId]`                     | An earlier chat, from this browser's local storage |
 
 Each URL is its own page under `src/app/(radio)/`. The layout holds what stays mounted between them: the chat store, the sidebar, the input, and the thread once a conversation has messages. That is what lets the URL move from `/new` (or a dashboard) to the new thread mid-answer without cutting it off.
 
 ## How a question is answered
 
-1. The browser sends the thread id and the thread's messages to `/api/chat`; the route uses only the last one, the new question.
-2. The route loads the thread's earlier turns from its Gateway conversation, with their tool calls and results.
-3. Gateway's Chat Completions API picks F1 tools (`get_results`, `get_lap_times`, `get_standings`, …). The route runs them between completions (`src/lib/tool-loop.ts`) and streams AG-UI events, so each tool call shows its result live.
-4. The answer streams back as OpenUI Lang and renders as it arrives, with the F1 component library (`src/library.ts`). The F1 charts take only a session and drivers and fetch their own rows from `/api/f1/[tool]`, so their numbers never pass through the model; tables carry the values the model copies from tool results.
-5. The turn is stored in the Gateway conversation before the stream ends, so a follow-up sees it.
+1. The browser sends the whole thread to `/api/chat`. The route keeps only the questions and answers and drops any tool calls or results the browser sent, so every value the model sees comes from a query this server ran.
+2. Gateway's Chat Completions API picks F1 tools (`get_results`, `get_lap_times`, `get_standings`, …). The route runs them between completions (`src/lib/tool-loop.ts`) and streams AG-UI events, so each tool call shows its result live.
+3. The answer streams back as OpenUI Lang and renders as it arrives, with the F1 component library (`src/library.ts`). The F1 charts take only a session and drivers and fetch their own rows from `/api/f1/[tool]`, so their numbers never pass through the model; tables carry the values the model copies from tool results.
+4. The browser saves the thread in local storage as it streams, so it's there after a reload.
 
 ## Data
 
@@ -53,4 +50,4 @@ Driver, team colour and circuit data for the visuals is committed under `src/ass
 
 `next.config.ts` bundles `data/**` into the API routes, so run `npm run snapshot:f1` before building. Hosts with a read-only filesystem keep new OpenF1 responses in memory only.
 
-The app has no sign-in: the API routes accept only same-origin requests, and every visitor shares one Gateway user's threads. Add authentication, mint frontend tokens per user, and add rate limits before exposing it widely.
+Nothing is stored on a server: each visitor's threads stay in their own browser's local storage, so a thread link only opens in the browser that created it. The app has no sign-in, and the API routes accept only same-origin requests. Add rate limits before exposing it widely, since every question spends Gateway credit on your key.
