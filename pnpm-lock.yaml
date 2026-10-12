@@ -20,6 +20,9 @@ importers:
       '@openuidev/react-ui':
         specifier: 0.18.0
         version: 0.18.0(@openuidev/react-headless@0.18.0(react@19.3.0)(zustand@4.5.7(@types/react@19.3.0)(react@19.3.0)))(@openuidev/react-lang@1.0.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(zod@4.6.6))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(zod@4.6.6)(zustand@4.5.7(@types/react@19.3.0)(react@19.3.0))
+      '@openuidev/server':
+        specifier: 0.3.0
+        version: 0.3.0(zod@4.6.6)
       flag-icons:
         specifier: ^7.5.0
         version: 7.5.0
@@ -819,6 +822,15 @@ packages:
       react-dom: ^18.0.0 || ^19.0.0
       zod: ^3.25.0 || ^4.0.0
       zustand: ^4.5.5
+
+  '@openuidev/server@0.3.0':
+    resolution: {integrity: sha512-54hrurVicVtRk5BBELLgiVFIq/HV8AiL1JQQozoWkbXjfjcabbYh7ZG7BJGbHbipm5ysI+QLatcjwBJbAnjXeA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@langchain/core': ^1.2.3
+    peerDependenciesMeta:
+      '@langchain/core':
+        optional: true
 
   '@posthog/core@1.55.2':
     resolution: {integrity: sha512-2mYxGbDmTLUs096VbcZqSWo0lrI48/BrX65r54NynxxFq409BOx9w73HxOAtOKZ1vblkdV6/GxQTe7KDcIQidg==}
@@ -2900,6 +2912,13 @@ snapshots:
       - '@types/react'
       - '@types/react-dom'
       - supports-color
+
+  '@openuidev/server@0.3.0(zod@4.6.6)':
+    dependencies:
+      '@openuidev/lang-core': 1.0.0(zod@4.6.6)
+    transitivePeerDependencies:
+      - '@modelcontextprotocol/sdk'
+      - zod
 
   '@posthog/core@1.55.2':
     dependencies:
