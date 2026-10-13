@@ -80,10 +80,12 @@ function RadioFrame({ children }: { children: ReactNode }) {
     else switchToNewThread();
   }, [routeThread, pathname, selectThread, switchToNewThread]);
 
-  // A thread Gateway can't load (deleted, or another user's) falls back to Home.
+  // A thread Gateway can't load (deleted, or another user's) falls back to Home. A failed answer
+  // also sets threadError, but the thread then has messages, so it stays and shows Retry.
+  const loadFailed = !!threadError && !isRunning && messages.length === 0;
   useEffect(() => {
-    if (routeThread && threadError) router.replace("/");
-  }, [routeThread, threadError, router]);
+    if (routeThread && loadFailed) router.replace("/");
+  }, [routeThread, loadFailed, router]);
 
   // The first question creates the thread; move the URL onto it. The thread renders here, not
   // in the page, so swapping the page underneath doesn't touch the answer that's streaming.
