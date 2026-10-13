@@ -1,3 +1,5 @@
+import { withBase } from "../lib/base-path";
+
 /*
  * Radio sounds.
  * - tick: a tiny band-passed click per keystroke, synthesised with Web Audio.
@@ -52,7 +54,7 @@ const TRANSMIT_PEAK = 0.9;
 let transmit: Promise<{ buffer: AudioBuffer; gain: number }> | null = null;
 
 function loadTransmit(a: AudioContext) {
-  transmit ??= fetch("/sounds/f1-radio-send.mp3")
+  transmit ??= fetch(withBase("/sounds/f1-radio-send.mp3"))
     .then((res) => res.arrayBuffer())
     .then((data) => a.decodeAudioData(data))
     .then((buffer) => {

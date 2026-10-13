@@ -21,6 +21,7 @@ import { f1Theme } from "../../f1-typography";
 import { getOrCreateUserId, USER_ID_HEADER } from "../../lib/user-id";
 import { messageText } from "./messages";
 import { RadioThread } from "./radio-thread";
+import { withBase } from "../../lib/base-path";
 
 /*
  * The Radio frame: what stays mounted while you move between pages. The pages are the
@@ -148,7 +149,7 @@ export default function RadioLayout({ children }: { children: ReactNode }) {
   // visitor, and uses only the new question; agUIAdapter reads the AG-UI events it streams back.
   const [llm] = useState(() =>
     fetchLLM({
-      url: "/api/chat",
+      url: withBase("/api/chat"),
       streamAdapter: agUIAdapter(),
       messageFormat: openAIMessageFormat,
       headers: { [USER_ID_HEADER]: userId },
@@ -156,14 +157,14 @@ export default function RadioLayout({ children }: { children: ReactNode }) {
   );
   const tokenFetch = useMemo<typeof fetch>(
     () => (input, init) => {
-      if (input !== "/api/frontend-token") return fetch(input, init);
+      if (input !== withBase("/api/frontend-token")) return fetch(input, init);
       const headers = new Headers(init?.headers);
       headers.set(USER_ID_HEADER, userId);
       return fetch(input, { ...init, headers });
     },
     [userId],
   );
-  const storage = useOpenuiCloudStorage({ token: "/api/frontend-token", features: { artifact: false }, fetch: tokenFetch });
+  const storage = useOpenuiCloudStorage({ token: withBase("/api/frontend-token"), features: { artifact: false }, fetch: tokenFetch });
   return (
     <ThemeProvider mode="light" lightTheme={f1Theme}>
       <ChatProvider llm={llm} storage={storage}>

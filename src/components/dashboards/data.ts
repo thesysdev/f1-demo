@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { withBase } from "../../lib/base-path";
 
 /*
  * Dashboard data: the same F1 tools the chat uses, through POST /api/f1/[tool]. Each call is
@@ -66,7 +67,7 @@ export function f1<T>(tool: string, args: Record<string, unknown> = {}): Promise
   const key = `${tool} ${JSON.stringify(args)}`;
   let hit = cache.get(key);
   if (!hit) {
-    hit = fetch(`/api/f1/${tool}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(args) })
+    hit = fetch(withBase(`/api/f1/${tool}`), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(args) })
       .then(async (r) => {
         const body = await r.json().catch(() => null);
         if (r.ok) return body;

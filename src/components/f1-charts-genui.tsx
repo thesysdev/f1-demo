@@ -24,6 +24,7 @@ import {
 } from "./f1-charts-special/f1-charts-special";
 import "./f1-charts-genui.css";
 import "./loading-board.css";
+import { withBase } from "../lib/base-path";
 
 type Row = Record<string, unknown>;
 type ToolResult = { session?: string; rows?: Row[]; note?: string; [k: string]: unknown };
@@ -38,7 +39,7 @@ function callTool(tool: string, args: Row): Promise<ToolResult> {
   const key = `${tool} ${JSON.stringify(args)}`;
   let hit = cache.get(key);
   if (!hit) {
-    hit = fetch(`/api/f1/${tool}`, {
+    hit = fetch(withBase(`/api/f1/${tool}`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(args),
