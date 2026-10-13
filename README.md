@@ -15,7 +15,7 @@ npm run snapshot:f1   # optional: cache finished 2026 sessions so the tools work
 npm run dev
 ```
 
-Open http://127.0.0.1:3000, which redirects to the demo's path, `/demo/f1-dashboard-agent`.
+Open http://127.0.0.1:3000.
 
 | Variable            | Default            | Purpose                                                    |
 | ------------------- | ------------------ | ---------------------------------------------------------- |
@@ -26,8 +26,6 @@ Open http://127.0.0.1:3000, which redirects to the demo's path, `/demo/f1-dashbo
 | `ALLOWED_ORIGINS`   | (none)             | Extra origins the API accepts, comma-separated, e.g. a preview domain |
 
 ## Pages
-
-URLs below are relative to `/demo/f1-dashboard-agent`.
 
 | URL                               | What it shows                                    |
 | --------------------------------- | ------------------------------------------------ |
@@ -53,12 +51,10 @@ Driver, team colour and circuit data for the visuals is committed under `src/ass
 
 ## Deploying
 
-The demo is served at [openui.com/demo/f1-dashboard-agent](https://www.openui.com/demo/f1-dashboard-agent): the OpenUI docs app rewrites that path to this deployment. So the app sets `basePath` to the same path (`src/lib/base-path.ts`), and paths written by hand, such as fetch calls and files in `public/`, go through `withBase()`. Set `ALLOWED_ORIGINS=https://www.openui.com,https://openui.com` so requests through the proxy pass the origin check.
-
 `next.config.ts` bundles `data/**` into the API routes, so run `npm run snapshot:f1` before building. Hosts with a read-only filesystem keep new OpenF1 responses in memory only.
 
 ## Visitors and storage
 
-There's no sign-in; it follows the OpenUI docs chat. Each browser tab session makes up an anonymous visitor id (`src/lib/user-id.ts`, kept in sessionStorage under its own key, since on openui.com it shares an origin with the docs chat) and sends it when asking `/api/frontend-token` for a token. Gateway scopes that token to the id, so a visitor lists and opens only their own threads, which are stored as Gateway conversations. Closing the tab starts a new visitor with an empty list. The id keeps visitors apart; it doesn't prove who anyone is.
+There's no sign-in; it follows the OpenUI docs chat. Each browser tab session makes up an anonymous visitor id (`src/lib/user-id.ts`, kept in sessionStorage) and sends it when asking `/api/frontend-token` for a token. Gateway scopes that token to the id, so a visitor lists and opens only their own threads, which are stored as Gateway conversations. Closing the tab starts a new visitor with an empty list. The id keeps visitors apart; it doesn't prove who anyone is.
 
 The API routes accept only requests from the app's own pages: a request with no `Origin` header (a script, `curl`) is refused, so it can't spend Gateway credit from outside. There's no rate limiting, so add some before promoting the demo widely.
