@@ -1,5 +1,5 @@
 import { runF1Tool } from "../../../../lib/f1/tools";
-import { isOwnOrigin } from "../../../../lib/same-origin";
+import { hasAllowedOrigin } from "../../../../lib/same-origin";
 
 export const runtime = "nodejs";
 
@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 // POST /api/f1/get_gaps with the tool's JSON arguments.
 export async function POST(request: Request, { params }: { params: Promise<{ tool: string }> }) {
   // Like the chat route, this example has no authentication: accept only its own local page.
-  if (!isOwnOrigin(request))
+  if (!hasAllowedOrigin(request))
     return Response.json({ error: "This example only accepts requests from its local pages." }, { status: 403 });
   const { tool } = await params;
   let args: unknown = {};

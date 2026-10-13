@@ -2,6 +2,7 @@ import type {
   ChatCompletionMessageFunctionToolCall,
   ChatCompletionMessageParam,
 } from "openai/resources/chat/completions";
+import { FRONTEND_TOKEN_HEADER } from "./frontend-token";
 
 // A conversation item, in the shape storeChatCompletionHistory() stores it.
 type ConversationItem = {
@@ -14,10 +15,18 @@ type ConversationItem = {
   output?: string;
 };
 
+/** Gateway refused or failed a history read; `status` says which (403/404: not this visitor's). */
+export class HistoryLoadError extends Error {
+  constructor(readonly status: number) {
+    super(`Could not load the thread from Gateway: ${status}`);
+  }
+}
+
 // Loads a thread's stored turns from its Gateway conversation as Chat Completions messages, the
 // reverse of storeChatCompletionHistory(): questions, answers, tool calls, and tool results.
+// It reads with the visitor's frontend token, so Gateway only returns the visitor's own thread.
 export async function loadChatCompletionHistory(options: {
-  apiKey: string;
+  frontendToken: string;
   conversationId: string;
   signal?: AbortSignal;
 }): Promise<ChatCompletionMessageParam[]> {
@@ -28,9 +37,9 @@ export async function loadChatCompletionHistory(options: {
     if (after) query.set("after", after);
     const response = await fetch(
       `https://api.thesys.dev/v1/conversations/${encodeURIComponent(options.conversationId)}/items?${query}`,
-      { headers: { Authorization: `Bearer ${options.apiKey}` }, signal: options.signal },
+      { headers: { [FRONTEND_TOKEN_HEADER]: options.frontendToken }, signal: options.signal },
     );
-    if (!response.ok) throw new Error(`Could not load the thread from Gateway: ${response.status}`);
+    if (!response.ok) throw new HistoryLoadError(response.status);
     const page = (await response.json()) as {
       data: ConversationItem[];
       has_more: boolean;

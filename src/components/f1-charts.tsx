@@ -95,16 +95,16 @@ function titled(name: "LineChart" | "BarChart", description: string) {
         xAxisLabel: p.xLabel as string | undefined,
         yAxisLabel: p.yLabel as string | undefined,
         height: p.height as number | undefined,
-        // No draw-in animation: the chart appears once its block settles, with the gate's fade.
+        // No draw-in animation: the chart re-renders as its data streams in, which would replay it.
         isAnimationActive: false,
       };
       // Rows-as-arrays and other shapes OpenUI accepts fall back to its own renderer.
       const chart = !names.length || !data.length ? (
         <Base {...renderProps} />
       ) : name === "LineChart" ? (
-        <LineChartCondensed {...common} variant={p.variant as "linear" | "natural" | "step" | undefined} strokeWidth={3} />
+        <LineChartCondensed {...common} variant={p.variant as "linear" | "natural" | "step" | undefined} />
       ) : (
-        <BarChartCondensed {...common} variant={p.variant as "grouped" | "stacked" | undefined} maxBarWidth={28} radius={2} />
+        <BarChartCondensed {...common} variant={p.variant as "grouped" | "stacked" | undefined} maxBarWidth={28} barRadius={2} />
       );
       return (
         <figure className="f1-chart">

@@ -23,6 +23,7 @@ import {
   StintBar as StintBarChart,
 } from "./f1-charts-special/f1-charts-special";
 import "./f1-charts-genui.css";
+import "./loading-board.css";
 
 type Row = Record<string, unknown>;
 type ToolResult = { session?: string; rows?: Row[]; note?: string; [k: string]: unknown };
@@ -54,9 +55,9 @@ function callTool(tool: string, args: Row): Promise<ToolResult> {
 
 type Load<T> = { state: "loading" } | { state: "ready"; value: T } | { state: "empty" };
 
-/** Runs `load` once its key has held still for 250ms, unless raw data was given. Block streaming
-    mounts most charts only once their statement is complete, but an ungated one (Sparkline)
-    can still see its arguments change while they stream. An empty or failed result is "empty",
+/** Runs `load` once its key has held still for 250ms, unless raw data was given. Charts render
+    while the answer streams, so their arguments can change as they arrive; waiting for them to
+    hold still avoids fetching with half-written values. An empty or failed result is "empty",
     since OpenF1 has gaps and a missing session should show a quiet panel, not an error. */
 function useChartData<T>(key: string, load: () => Promise<T | null>, raw?: T | null): Load<T> {
   const [result, setResult] = useState<Load<T>>({ state: "loading" });
@@ -95,8 +96,8 @@ function Pending({ load, title, height, children }: { load: Load<unknown>; title
       {load.state === "empty" ? (
         <p className="f1-chart-empty">No data for this chart.</p>
       ) : (
-        // The block-by-block loader's own board (.f1-settle in stream-settle.css), laid behind the
-        // title, so a loading chart and a streaming block always look and move the same.
+        // The loading board (.f1-settle in loading-board.css), laid behind the title, so a loading
+        // chart and a loading dashboard always look and move the same.
         <div className="f1-settle f1-chart-board" aria-hidden />
       )}
     </figure>

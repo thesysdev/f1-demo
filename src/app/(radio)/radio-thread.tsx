@@ -17,15 +17,10 @@ import {
   type PitWallStep,
 } from "../../components/chat";
 import { f1ToolLabel } from "../../components/chat/tool-icons";
+import { playTransmit } from "../../components/radio-sounds";
 import { library } from "../../library";
-import {
-  groupIntoTurns,
-  hasLangSyntax,
-  messageText,
-  splitContent,
-  wrapContent,
-  wrapContext,
-} from "./messages";
+import { buildMessage, parseMessage } from "@openuidev/lang-core";
+import { groupIntoTurns, hasLangSyntax, messageText } from "./messages";
 
 /*
  * RadioThread: the live conversation, drawn with the F1 chat components. Each turn
@@ -70,37 +65,35 @@ function toStep(activity: ToolActivity): PitWallStep {
 function Answer({ message, streaming }: { message: AssistantMessage; streaming: boolean }) {
   const processMessage = useThread((s) => s.processMessage);
   const updateMessage = useThread((s) => s.updateMessage);
-  const { content, context, header } = useMemo(() => splitContent(message.content ?? ""), [message.content]);
-  const initialState = useMemo(() => {
-    if (!context) return undefined;
-    try {
-      const parsed = JSON.parse(context);
-      return Array.isArray(parsed) ? parsed[0] : parsed;
-    } catch {
-      return undefined;
-    }
-  }, [context]);
+  // The answer and the form state saved with it (OpenUI's message protocol, parsed by lang-core).
+  const { content, context, attributes } = useMemo(
+    () => parseMessage(message.content ?? "", { streaming }),
+    [message.content, streaming],
+  );
+  const initialState = useMemo(
+    () => (Array.isArray(context) ? context[0] : context && typeof context === "object" ? context : undefined),
+    [context],
+  );
 
   // Form state lives in the message, so it comes back with the thread.
   const onStateUpdate = useCallback(
     (state: Record<string, unknown>) => {
-      const body = header ? wrapContent(content, header) : content;
       updateMessage({
         ...message,
-        content: Object.keys(state).length ? body + wrapContext(JSON.stringify([state])) : body,
+        content: buildMessage({ content, attributes, context: Object.keys(state).length ? [state] : undefined }),
       });
     },
-    [content, header, message, updateMessage],
+    [content, attributes, message, updateMessage],
   );
 
   // A follow-up click asks it as the next question, the same way OpenUI's AgentInterface does.
   const onAction = useCallback(
     (event: ActionEvent) => {
       if (event.type === BuiltinActionType.ContinueConversation) {
-        const text = event.humanFriendlyMessage ? wrapContent(event.humanFriendlyMessage) : "";
-        const ctx: unknown[] = [`User clicked: ${event.humanFriendlyMessage}`];
-        if (event.formState) ctx.push(event.formState);
-        processMessage({ role: "user", content: text + wrapContext(JSON.stringify(ctx)) });
+        const context: unknown[] = [`User clicked: ${event.humanFriendlyMessage}`];
+        if (event.formState) context.push(event.formState);
+        playTransmit();
+        processMessage({ role: "user", content: buildMessage({ content: event.humanFriendlyMessage ?? "", context }) });
       } else if (event.type === BuiltinActionType.OpenUrl) {
         const url = event.params?.["url"];
         if (typeof url === "string") window.open(url, "_blank", "noopener");
@@ -141,7 +134,7 @@ function AssistantTurn({
   const withBody = segments.filter((s) => (s.content?.length ?? 0) > 0 || (s.toolCalls?.length ?? 0) > 0);
   const active = withBody.length ? withBody : segments;
   const last = active[active.length - 1] as AssistantMessage | undefined;
-  const lastContent = splitContent(last?.content ?? "").content;
+  const lastContent = parseMessage(last?.content ?? "", { streaming: live }).content;
   // While live, text only counts as the answer once it's writing OpenUI Lang; before that it's thinking.
   const answer = last && (!live || hasLangSyntax(lastContent)) ? last : null;
 
@@ -152,7 +145,7 @@ function AssistantTurn({
     const rows: PitWallStep[] = [];
     for (const seg of active) {
       if (seg.id !== answer?.id) {
-        const text = thinkingText(splitContent(seg.content ?? "").content);
+        const text = thinkingText(parseMessage(seg.content ?? "", { streaming: live }).content);
         if (text) rows.push({ kind: "thinking", id: `${seg.id}:thinking`, text });
       }
       for (const call of seg.toolCalls ?? []) {
@@ -200,6 +193,7 @@ export function RadioThread() {
     if (at === -1) return;
     const question = messages[at];
     setMessages(messages.slice(0, at));
+    playTransmit();
     processMessage({ role: "user", content: question.content as string });
   };
 

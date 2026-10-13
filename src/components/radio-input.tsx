@@ -211,9 +211,11 @@ export function RadioInput({
       />
       {caret && (
         // A hidden copy of the text up to the cursor pushes a thick, italic-slanted red bar into place.
+        // Centred like the input's own text, so the bar sits on the same baseline even when a
+        // browser makes the input taller than one line.
         <span
           aria-hidden
-          style={{ position: "absolute", inset: 0, padding: `0 ${ITALIC_PAD}`, overflow: "hidden", whiteSpace: "pre", pointerEvents: "none" }}
+          style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", padding: `0 ${ITALIC_PAD}`, overflow: "hidden", whiteSpace: "pre", pointerEvents: "none" }}
         >
           <span style={{ display: "inline-block", transform: `translateX(${-caret.scroll}px)` }}>
             <span style={{ visibility: "hidden" }}>{text.slice(0, caret.at)}</span>
