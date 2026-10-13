@@ -1,41 +1,41 @@
 @font-face {
   font-family: "Titillium Web";
-  src: url("/fonts/titillium-web/titillium-web-latin-400-normal.woff2") format("woff2");
+  src: url("../../public/fonts/titillium-web/titillium-web-latin-400-normal.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Titillium Web";
-  src: url("/fonts/titillium-web/titillium-web-latin-400-italic.woff2") format("woff2");
+  src: url("../../public/fonts/titillium-web/titillium-web-latin-400-italic.woff2") format("woff2");
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
   font-family: "Titillium Web";
-  src: url("/fonts/titillium-web/titillium-web-latin-600-normal.woff2") format("woff2");
+  src: url("../../public/fonts/titillium-web/titillium-web-latin-600-normal.woff2") format("woff2");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Titillium Web";
-  src: url("/fonts/titillium-web/titillium-web-latin-700-normal.woff2") format("woff2");
+  src: url("../../public/fonts/titillium-web/titillium-web-latin-700-normal.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Titillium Web";
-  src: url("/fonts/titillium-web/titillium-web-latin-700-italic.woff2") format("woff2");
+  src: url("../../public/fonts/titillium-web/titillium-web-latin-700-italic.woff2") format("woff2");
   font-weight: 700;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
   font-family: "Titillium Web";
-  src: url("/fonts/titillium-web/titillium-web-latin-900-normal.woff2") format("woff2");
+  src: url("../../public/fonts/titillium-web/titillium-web-latin-900-normal.woff2") format("woff2");
   font-weight: 900;
   font-style: normal;
   font-display: swap;
@@ -43,7 +43,7 @@
 /* Saira variable: weight 100–900, width 50–125%. */
 @font-face {
   font-family: "Saira";
-  src: url("/fonts/saira/saira-variable.ttf") format("truetype");
+  src: url("../../public/fonts/saira/saira-variable.ttf") format("truetype");
   font-weight: 100 900;
   font-stretch: 50% 125%;
   font-style: normal;
@@ -51,7 +51,7 @@
 }
 @font-face {
   font-family: "Saira";
-  src: url("/fonts/saira/saira-variable-italic.ttf") format("truetype");
+  src: url("../../public/fonts/saira/saira-variable-italic.ttf") format("truetype");
   font-weight: 100 900;
   font-stretch: 50% 125%;
   font-style: italic;

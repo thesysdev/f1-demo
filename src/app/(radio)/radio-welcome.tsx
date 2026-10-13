@@ -4,6 +4,7 @@ import { useThreadList } from "@openuidev/react-headless";
 import { useEffect, useMemo, useState } from "react";
 import { ChatStarters, ChatWelcome, type ChatStarter } from "../../components/chat";
 import { messageText } from "./messages";
+import { withBase } from "../../lib/base-path";
 
 /*
  * RadioWelcome: the empty state for a new chat. The welcome and the starting grid,
@@ -40,7 +41,7 @@ function useSuggestedQuestions() {
       if (cached?.key === key) return setQuestions(cached.questions);
     } catch {}
     const controller = new AbortController();
-    fetch("/api/starters", {
+    fetch(withBase("/api/starters"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ recent }),
