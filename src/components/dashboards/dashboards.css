@@ -73,6 +73,18 @@
   line-height: 1;
 }
 /* Page titles: the destination's name, larger. */
+.f1d-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .f1d-page-title {
   margin: 6px 0 0;
   font-family: var(--d-display);

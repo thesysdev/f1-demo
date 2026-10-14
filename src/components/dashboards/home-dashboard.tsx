@@ -33,6 +33,7 @@ export function HomeDashboard() {
 
   return (
     <div className="f1d">
+      <h1 className="f1d-sr-only">OpenUI x F1 dashboard</h1>
       <NextRace schedule={schedule} next={next} year={year} />
       <Overview schedule={schedule} drivers={drivers} teams={teams} year={year} />
       <TitleFight drivers={drivers} teams={teams} progression={progression} year={year} />
