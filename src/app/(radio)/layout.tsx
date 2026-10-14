@@ -129,6 +129,8 @@ function RadioFrame({ children }: { children: ReactNode }) {
           input={{
             busy: isRunning,
             maxLength: MAX_QUESTION,
+            // Links from openui.com hand over a question as ?prompt=.
+            prefillParam: "prompt",
             // ask() plays the team-radio clip; typing stays silent.
             onSend: ask,
           }}

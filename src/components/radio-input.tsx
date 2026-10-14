@@ -26,6 +26,8 @@ export type RadioInputProps = {
   busy?: boolean;
   /** Longest question the input takes. */
   maxLength?: number;
+  /** A query param to prefill the input from on load (e.g. "prompt"), so a link can hand over a question. */
+  prefillParam?: string;
   /** Radio clicks while typing and the team-radio clip on send; "send" plays only the clip. Off by default. */
   sound?: boolean | "send";
   style?: CSSProperties;
@@ -126,6 +128,7 @@ export function RadioInput({
   onSend,
   busy = false,
   maxLength,
+  prefillParam,
   sound = false,
   style,
 }: RadioInputProps) {
@@ -143,6 +146,19 @@ export function RadioInput({
   };
   useEffect(syncCaret, [text]);
   useMeter(barsRef, energyRef);
+
+  // A link can arrive with a question (?prompt=...). Type it in, ready to send, and take it
+  // off the address so a reload or a new conversation doesn't bring it back.
+  useEffect(() => {
+    if (!prefillParam) return;
+    const url = new URL(window.location.href);
+    const prompt = url.searchParams.get(prefillParam)?.trim();
+    if (!prompt) return;
+    setText(maxLength ? prompt.slice(0, maxLength) : prompt);
+    url.searchParams.delete(prefillParam);
+    window.history.replaceState(window.history.state, "", url);
+    // Only on first load.
+  }, []);
 
   // Any change in the text, typed or controlled, kicks the meter.
   useEffect(() => {
