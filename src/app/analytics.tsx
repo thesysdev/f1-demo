@@ -2,17 +2,18 @@
 
 import { useEffect } from "react";
 
-// Only the deployed demo, served under openui.com/demo, reports to OpenUI's PostHog project.
-const isDeployedDemo = (hostname: string) => /(^|\.)openui\.com$/.test(hostname);
+const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+const isProduction = process.env.NODE_ENV === "production";
 
 export function Analytics() {
   useEffect(() => {
-    if (!isDeployedDemo(window.location.hostname)) return;
+    if (!isProduction || !POSTHOG_KEY) return;
 
     void import("posthog-js")
       .then(({ default: posthog }) => {
-        posthog.init("phc_3OLW53x09ZTVZSV6BEpj5uycj3ooqR6KOemOjx04e3D", {
-          api_host: "https://dgoeivjus9jfp.cloudfront.net",
+        posthog.init(POSTHOG_KEY, {
+          ...(POSTHOG_HOST ? { api_host: POSTHOG_HOST } : {}),
           capture_pageview: "history_change",
           disable_session_recording: false,
           session_recording: { sampleRate: 0.3 },
