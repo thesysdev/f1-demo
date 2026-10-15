@@ -2,6 +2,8 @@
 
 A Formula 1 demo built on OpenUI: a "team radio" chat that answers with live charts, tables and F1 visuals, alongside Home, Standings, Drivers and Teams dashboards. All data comes from [OpenF1](https://openf1.org).
 
+**[Try the live demo](https://www.openui.com/demo/f1-dashboard)**
+
 It grew out of the [conversational analytics cookbook](https://github.com/thesysdev/openui/tree/main/examples/cookbooks/conversational-analytics) in the OpenUI repo. The cookbook stays small and matches its [walkthrough](https://www.openui.com/cookbooks/conversational-analytics); this repo is the full demo that gets deployed.
 
 ## Run it
