@@ -15,7 +15,6 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChatShell } from "../../components/chat-shell";
 import { AskProvider } from "../../components/dashboards";
-import { playTransmit } from "../../components/radio-sounds";
 import { Sidebar, type SidebarThread } from "../../components/sidebar";
 import { f1Theme } from "../../f1-typography";
 import { getOrCreateUserId, USER_ID_HEADER } from "../../lib/user-id";
@@ -98,10 +97,8 @@ function RadioFrame({ children }: { children: ReactNode }) {
     () => threads.map((t) => ({ id: t.id, title: messageText(t.title), meta: when(t.createdAt) })),
     [threads],
   );
-  // The input, suggested questions and dashboard items all ask through here, so each plays the
-  // team-radio clip. Follow-up cards and retry send from the thread (radio-thread.tsx) and play it there.
+  // The input, suggested questions and dashboard items all ask through here.
   const ask = (question: string) => {
-    playTransmit();
     processMessage({ role: "user", content: question.slice(0, MAX_QUESTION) });
   };
 
@@ -131,7 +128,6 @@ function RadioFrame({ children }: { children: ReactNode }) {
             maxLength: MAX_QUESTION,
             // Links from openui.com hand over a question as ?prompt=.
             prefillParam: "prompt",
-            // ask() plays the team-radio clip; typing stays silent.
             onSend: ask,
           }}
         >

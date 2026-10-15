@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { Mascot } from "./mascot";
-import { playTick, playTransmit } from "./radio-sounds";
+import { playTick } from "./radio-sounds";
 
 /*
  * RadioInput: the chat box styled as an F1 team-radio caption. The mascot sits
@@ -28,8 +28,8 @@ export type RadioInputProps = {
   maxLength?: number;
   /** A query param to prefill the input from on load (e.g. "prompt"), so a link can hand over a question. */
   prefillParam?: string;
-  /** Radio clicks while typing and the team-radio clip on send; "send" plays only the clip. Off by default. */
-  sound?: boolean | "send";
+  /** Radio clicks while typing. Off by default. */
+  sound?: boolean;
   style?: CSSProperties;
 };
 
@@ -175,7 +175,6 @@ export function RadioInput({
     e?.preventDefault();
     if (!text.trim() || busy) return;
     energyRef.current = 1.4;
-    if (sound) playTransmit();
     onSend?.(text.trim());
     setText("");
   };
@@ -203,7 +202,7 @@ export function RadioInput({
         autoCapitalize="off"
         autoComplete="off"
         onChange={(e) => {
-          if (sound === true) playTick();
+          if (sound) playTick();
           setText(e.target.value);
         }}
         onSelect={syncCaret}
