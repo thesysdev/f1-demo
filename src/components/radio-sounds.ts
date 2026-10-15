@@ -1,12 +1,7 @@
-import { withBase } from "../lib/base-path";
-
 /*
  * Radio sounds.
  * - tick: a tiny band-passed click per keystroke, synthesised with Web Audio.
- * - transmit: the F1 team-radio clip in public/sounds/f1-radio-send.mp3 (supplied by Shubham),
- *   played whenever a question is sent, at a consistent level.
- * Audio starts on the first call, which always comes from a key press or click, so browsers
- * allow it.
+ * Audio starts on the first call, which always comes from a key press, so browsers allow it.
  */
 
 let ctx: AudioContext | null = null;
@@ -45,40 +40,4 @@ export function playTick() {
   if (!a) return;
   // Small random pitch so fast typing doesn't sound like a machine gun.
   staticBurst(a, a.currentTime, 0.022, 2600 + Math.random() * 900, 6, 0.09);
-}
-
-// The clip is mastered quietly (it peaks around 8% of full scale), and an <audio> element can't
-// go above volume 1. So it's decoded once and played through a gain that lifts its own peak to
-// TRANSMIT_PEAK, whatever level the file was exported at.
-const TRANSMIT_PEAK = 0.9;
-let transmit: Promise<{ buffer: AudioBuffer; gain: number }> | null = null;
-
-function loadTransmit(a: AudioContext) {
-  transmit ??= fetch(withBase("/sounds/f1-radio-send.mp3"))
-    .then((res) => res.arrayBuffer())
-    .then((data) => a.decodeAudioData(data))
-    .then((buffer) => {
-      let peak = 0;
-      for (let ch = 0; ch < buffer.numberOfChannels; ch++)
-        for (const sample of buffer.getChannelData(ch)) peak = Math.max(peak, Math.abs(sample));
-      return { buffer, gain: peak > 0 ? TRANSMIT_PEAK / peak : 1 };
-    });
-  // A failed load can be retried on the next send.
-  transmit.catch(() => (transmit = null));
-  return transmit;
-}
-
-export function playTransmit() {
-  const a = audio();
-  if (!a) return;
-  loadTransmit(a)
-    .then(({ buffer, gain }) => {
-      const src = a.createBufferSource();
-      src.buffer = buffer;
-      const level = a.createGain();
-      level.gain.value = gain;
-      src.connect(level).connect(a.destination);
-      src.start();
-    })
-    .catch((error: unknown) => console.warn("Could not play the radio sound.", error));
 }

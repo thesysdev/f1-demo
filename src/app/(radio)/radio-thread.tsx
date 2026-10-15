@@ -17,7 +17,6 @@ import {
   type PitWallStep,
 } from "../../components/chat";
 import { f1ToolLabel } from "../../components/chat/tool-icons";
-import { playTransmit } from "../../components/radio-sounds";
 import { library } from "../../library";
 import { buildMessage, parseMessage } from "@openuidev/lang-core";
 import { groupIntoTurns, hasLangSyntax, messageText } from "./messages";
@@ -92,7 +91,6 @@ function Answer({ message, streaming }: { message: AssistantMessage; streaming: 
       if (event.type === BuiltinActionType.ContinueConversation) {
         const context: unknown[] = [`User clicked: ${event.humanFriendlyMessage}`];
         if (event.formState) context.push(event.formState);
-        playTransmit();
         processMessage({ role: "user", content: buildMessage({ content: event.humanFriendlyMessage ?? "", context }) });
       } else if (event.type === BuiltinActionType.OpenUrl) {
         const url = event.params?.["url"];
@@ -193,7 +191,6 @@ export function RadioThread() {
     if (at === -1) return;
     const question = messages[at];
     setMessages(messages.slice(0, at));
-    playTransmit();
     processMessage({ role: "user", content: question.content as string });
   };
 
